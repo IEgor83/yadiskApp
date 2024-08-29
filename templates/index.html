@@ -1,0 +1,81 @@
+<!-- templates/disk_viewer/index.html -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Просмотр файлов Яндекс.Диска</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .file-list {
+            margin-top: 20px;
+        }
+        .file-list ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        .file-list li {
+            margin: 5px 0;
+        }
+        .file-list li a {
+            text-decoration: none;
+            color: blue;
+        }
+    </style>
+</head>
+<body>
+    <h1>Просмотр файлов Яндекс.Диска</h1>
+    <form method="post">
+        {% csrf_token %}
+        <input type="text" name="public_key" placeholder="Введите публичный ключ" value="{{ public_key }}" required>
+        <button type="submit">Показать файлы</button>
+    </form>
+
+    <div class="filter" style="margin-top: 15px;">
+        <label for="file_type_filter">Фильтр по типу:</label>
+        <select id="file_type_filter">
+            <option value="all">Все</option>
+            {% for mime_type, files in categorized_files.items %}
+                <option value="{{ mime_type }}">{{ mime_type }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    {% if files %}
+        <div class="file-list">
+            <h2>Список файлов и папок:</h2>
+            <ul id="file_list">
+                {% for file in files %}
+                    <li data-mime-type="{{ file.mime_type|default:'unknown' }}">
+                        {% if file.type == 'dir' %}
+                            📁 {{ file.name }}
+                        {% elif file.type == 'file' %}
+                            📄 {{ file.name }}
+                            <a href="{{ file.file }}" target="_blank">Скачать</a>
+                        {% endif %}
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% elif public_key %}
+        <p>Файлы не найдены или произошла ошибка при получении данных.</p>
+    {% endif %}
+
+    <script>
+        document.getElementById('file_type_filter').addEventListener('change', function () {
+            const selectedType = this.value;
+            const files = document.querySelectorAll('#file_list li');
+
+            files.forEach(file => {
+                const fileType = file.getAttribute('data-mime-type');
+                if (selectedType === 'all' || fileType === selectedType) {
+                    file.style.display = '';
+                } else {
+                    file.style.display = 'none';
+                }
+            });
+        });
+    </script>
+</body>
+</html>
